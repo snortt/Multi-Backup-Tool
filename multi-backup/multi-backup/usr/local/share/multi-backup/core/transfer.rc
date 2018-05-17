@@ -1,0 +1,55 @@
+# 
+# Resources for mult-backup system
+# Gabriel Marques - gabriel.marques@rnp.br
+# Wed May 25 11:43:25 BRT 2016
+#
+
+# ---------------- FTP SERVER ROUTINES -----------------
+# Function for transfering the backup files
+# It receives the file(s) to be sent
+# Function for transfering the backup files
+# It receives the file(s) to be sent
+backup_transfer() {
+
+    # Check if we need to transfer files or leave them on local machine
+    if [[ "$TRANSFER_FLAG" -eq "0" ]]; then
+        echo -e "Transfers are disabled." | tee -a ${BKP_LOG}
+        return 0
+    fi
+
+	# Check arguments (can't transfer nothing :-P )
+	if [[ "$#" -le "0" ]]; then
+		echo -e "Backup file not specified! Abort!" | tee -a $BKP_LOG		
+		exit 104		
+	fi
+    
+    _delete=0
+    if [ "$1" == "-d" ]; then
+        _delete=1
+        shift
+    fi
+
+	# Let's get all the credentials from the file
+	if [[ -f $BKP_SRV_AUTH ]]; then
+		_host=$(cat $BKP_SRV_AUTH | cut -d ":" -f1)
+		_user=$(cat $BKP_SRV_AUTH | cut -d ":" -f2)
+		_pass=$(cat $BKP_SRV_AUTH | cut -d ":" -f3)
+	else
+		echo -e "Error! $BKP_SRV_AUTH not found! Aborted!" | tee -a $BKP_LOG
+		echo -e "Create $BKP_SRV_AUTH with syntax host:user:password" | tee -a $BKP_LOG
+		exit 106
+	fi
+
+    if ncftpput -m -u ${_user} -p ${_pass} ${_host} ${BKP_SRV_DIR}/ "$@"; then
+        echo -e "Backup sent to server" | tee -a $BKP_LOG
+        if [ "$_delete" == "1" ]; then
+            rm -f "$@" && echo -e "$@ deleted, as requested by -d parameter" | tee -a $BKP_LOG
+        fi
+    else
+        echo -e "FTP transfer error" | tee -a $BKP_LOG
+    fi
+
+    # Clear sensitive data
+    unset _host _user _pass
+}
+

@@ -1,0 +1,169 @@
+#!/bin/bash
+# 
+# This is a multi-backup system. 
+# It can create backups for MySQL, Wordpress, Apache, Linux system files and many more 
+# modules can be implemented.
+# 
+# For more information, take a look at multi-backup(1)
+# 
+
+# Gabriel Marques - gabriel.marques@rnp.br
+# Wed May 25 11:43:25 BRT 2016
+#
+
+# Execute as root only
+me="$(id -u)"
+if [[ "$me" -ne "0" ]]; then
+    echo -e "You must be root to run this tool"
+    exit 199
+fi
+
+
+# -----------------------------------------
+# Do initialization 
+# Yes, this should be inside a .conf file, but I trully 
+# believe you shouldn't mess with this file, so I placed it here. ;)
+#
+INITFILE="/usr/local/share/multi-backup/multi-backup.init"
+if [ -f $INITFILE ]; then
+	. $INITFILE
+else
+    # Here we use PANIC as we do not have our log file. INITFILE failed! 
+	echo -e "[PANIC]: Unable to load init file!" | tee -a $BKP_LOG 
+	echo -e "[PANIC]: Please verify ${INITFILE}" | tee -a $BKP_LOG 
+	echo -e "[PANIC]: Execution aborted!" | tee -a $BKP_LOG 
+    exit 200
+fi
+# -----------------------------------------
+
+# Let's backup things! :)
+if [[ "$#" -gt "0" ]]; then
+    # We don't need shifting here, because help and clean exit when they're done ;)
+    if [[ "$1" == "--help" ]]; then
+		help_msg
+	fi
+
+    if [[ "$1" == "--clean" ]]; then
+		if [[ "$2" == "-v" ]]; then
+            clean_logs $2
+        else
+            clean_logs
+        fi
+	fi
+	
+    if [[ "$1" == "--clean_local" ]]; then
+		if [[ "$2" == "-v" ]]; then
+            clean_local $2
+        else
+            clean_local
+        fi
+	fi
+	
+    # If we want to transfer already created files to the server, now is the time
+	if [[ "$1" == "transfer" ]]; then
+		${SANITIZE} 
+		shift
+		backup_transfer "$@"
+		exit 0
+	fi
+
+    # Transfer option shouldn't be used with other modules!
+	if echo $@ | grep transfer > /dev/null 2>&1; then
+		echo -e "Error!" | tee -a $BKP_LOG
+		echo -e "\"transfer\" module should be used alone!" | tee -a $BKP_LOG
+		exit 0
+	fi
+
+    echo -e "Starting backups on $(date)" | tee -a $BKP_LOG
+	while [[ "$#" -gt "0" ]]
+	do
+		case "$1" in
+
+			"apache")
+                ${SANITIZE}
+                service ${APACHESVC} stop  
+                sleep $WAITSVC
+                backup_apache
+                service ${APACHESVC} start  
+                shift ;;
+			
+			"exim")
+                ${SANITIZE}
+                service ${EXIMSVC} stop 
+                sleep $WAITSVC
+                backup_exim
+                service ${EXIMSVC} start 
+                shift ;;
+			
+            "ldap")
+                ${SANITIZE}
+                service ${LDAPSVC} stop 
+                sleep $WAITSVC
+                backup_ldap
+                service ${LDAPSVC} start 
+                shift ;;
+			
+			"linux") ${SANITIZE} ; backup_linux ; shift ;;
+			
+			"mysql") 
+                ${SANITIZE}
+				if [[ "$2" == "-i" ]]; then
+					backup_mysql $2
+					shift 2
+				else
+					backup_mysql
+					shift
+				fi
+			    ;;
+            
+			"owncloud")
+                ${SANITIZE}
+                backup_owncloud
+                shift ;;
+			
+			"redmine")
+                ${SANITIZE}
+                service ${APACHESVC} stop 
+                sleep $WAITSVC
+                backup_redmine
+                service ${APACHESVC} start  
+                shift ;;
+
+			"repos") ${SANITIZE} ; backup_repos ; shift ;;
+
+            "restore")
+				if [[ "$2" == "-v" ]]; then
+                    shift 2 
+                    restore_backup -v "$@" 
+				else
+					shift 
+                    restore_backup "$@" 
+				fi
+            ;;
+
+			"sanity") 
+				if [[ "$2" == "-v" ]]; then
+					SANITIZE="sanity_checks $2"
+					shift 2
+				else
+					SANITIZE="sanity_checks" 
+					shift
+				fi
+                ${SANITIZE}
+			;;
+			
+			"wordpress") 
+                ${SANITIZE}
+                service ${APACHESVC} stop  
+                sleep $WAITSVC
+                backup_wordpress
+                service ${APACHESVC} start  
+                shift ;;
+
+            *) echo -e "Unknown module: $1" | tee -a "$BKP_LOG"; shift ;;
+		esac
+	done
+else
+	help_msg
+fi
+

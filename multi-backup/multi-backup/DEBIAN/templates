@@ -1,0 +1,39 @@
+Template: multi-backup/info_text
+Type: text 
+Default:
+Description: The next questions will gather authentication data, so the tool 
+ can extract the MySQL backup and also connect to the FTP backup server.
+ .
+ If you are upgrading this package, please notice that your current config 
+ will be saved as .mypwf.old and .bkpsrvauth.old (or whatever name you gave them), 
+ and then new configuration files will be created based on your answers
+
+Template: multi-backup/ask_ftpsrv
+Type: string
+Default:127.0.0.1 
+Description: IP address for the FTP backup server.
+ .
+ Please note that the multi-backup tool expects trasnfering files after each
+ backup it creates, so you should have an FTP backup server running on your network.
+  
+ If you don't have an FTP server expecting your backups, use the TRANSFER_FLAG 
+ to disable backup transfers, but this is not advised as all the backups will 
+ remain on the same server they are created.
+
+Template: multi-backup/ask_ftpuser
+Type: string
+Default: bkp
+Description: User to access the FTP backup server.
+
+Template: multi-backup/ask_ftppass
+Type: string
+Default: 12345
+Description: Password for the FTP backup server.
+
+Template: multi-backup/ask_mysqlpass
+Type: string
+Default: 12345 
+Description: root's password to access the MySQL server.
+ .
+ This will be stored inside the MYSQL_PWF file (normaly /root/.mypwf).
+

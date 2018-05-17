@@ -1,0 +1,32 @@
+#!/bin/sh
+set -e
+
+# "Config being called"
+
+# Source debconf library.
+. /usr/share/debconf/confmodule
+
+# Some info 
+db_input critical multi-backup/info_text || true
+db_go
+
+# The questions
+db_input critical multi-backup/ask_ftpsrv || true
+db_go
+
+db_input critical multi-backup/ask_ftpuser || true
+db_go
+
+db_input critical multi-backup/ask_ftppass || true
+db_go
+
+db_input critical multi-backup/ask_mysqlpass || true
+db_go
+
+# Check the answers.
+#db_get foo/like_debian
+#if [ "$RET" = "false" ]; then
+#    # Poor misguided one..
+#    db_input critical foo/why_debian_is_great || true
+#    db_go
+#fi

@@ -1,0 +1,49 @@
+#!/bin/sh
+
+# Source debconf library.
+. /usr/share/debconf/confmodule
+
+db_get multi-backup/ask_ftpsrv
+FTPSRV="${RET}"
+
+db_get multi-backup/ask_ftpuser
+FTPUSR="${RET}"
+
+db_get multi-backup/ask_ftppass
+FTPPWD="${RET}"
+
+db_get multi-backup/ask_mysqlpass
+MYSQLPWD="${RET}"
+
+#	multi-backup will read auth info from SRV_BKP_AUTH file, respecting this syntax:
+AUTHFILESDIR="/root"
+BKPSRVAUTH="${AUTHFILESDIR}/.bkpsrvauth"
+MYSQLPWF="${AUTHFILESDIR}/.mypwf"
+
+echo "Fixing files ownership"
+chown -R root:root /usr/local/bin/multi-backup /usr/local/etc/multi-backup /usr/local/man/man1/multi-backup.1.gz
+chown -R root:root /usr/local/share/doc/ /usr/local/share/multi-backup /var/lib/dpkg/info/multi-backup*
+
+if [ -f $BKPSRVAUTH ]; then
+    echo "$BKPSRVAUTH exists! Saving backup first!"
+    mv $BKPSRVAUTH ${BKPSRVAUTH}.old && chmod 400 ${BKPSRVAUTH}.old && echo "${BKPSRVAUTH}.old [OK]"
+fi
+
+echo "Creating FTP credentials control file: $BKPSRVAUTH"
+echo "${FTPSRV}:${FTPUSR}:${FTPPWD}" > $BKPSRVAUTH && echo "FTP Server Control file [OK]"
+chmod 400 $BKPSRVAUTH && echo "FTP Server Control file permissions [OK]"
+
+if [ -f $MYSQLPWF ]; then
+    echo "$MYSQLPWF exists! Saving backup first!"
+    mv $MYSQLPWF ${MYSQLPWF}.old && chmod 400 ${MYSQLPWF}.old && echo "${MYSQLPWF}.old [OK]"
+fi
+
+echo "Creating MySQL credentials control file: $MYSQLPWF"
+echo "$MYSQLPWD" > $MYSQLPWF && echo "MySQL Control file [OK]"
+chmod 400 $MYSQLPWF && echo "MySQL Control file permissions [OK]"
+
+echo "Creating directories for backups and logs"
+mkdir -p /var/multi-backup/backups && echo "Backups [OK]"
+
+echo "Please take a look at multi-backup(1) for detailed information on usage"
+

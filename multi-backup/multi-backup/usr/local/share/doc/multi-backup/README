@@ -1,0 +1,16 @@
+Backup tool for various system areas
+
+This tool can (or should, at least ;P ) create backups for parts of your Linux installation.
+These parts are divided by modules.
+   Apache module   : creates backup for Apache related files
+   Linux module    : creates backup for specific Linux configuration files
+   Transfer module : transfers the backup archives to a server (see multi-backup (1))
+   [...]
+
+Well, you got the main idea.
+
+Feel free to improve, modify and make amendments to this tool.
+Don't forget to document and maintain the manpage.
+
+Have fun!
+  -- Gabriel Marques

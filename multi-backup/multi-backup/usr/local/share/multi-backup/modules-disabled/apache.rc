@@ -1,0 +1,18 @@
+# 
+# Resources for mult-backup system
+# Gabriel Marques - gabriel.marques@rnp.br
+# Wed May 25 11:43:25 BRT 2016
+#
+
+# Function to create Apache backup
+backup_apache() {
+    echo -e "-----------------------" | tee -a $BKP_LOG
+	echo -e "Executing Apache backup" | tee -a $BKP_LOG
+	echo -e "Start time: $(date)"        | tee -a $BKP_LOG
+    $ARCHIVE $ARCHIVE_OPT ${APACHE_BKPFILE}.${ARCHIVE_EXT} $APACHE_DIR $APACHE_FILES >> $BKP_LOG 2>&1 && echo -e "Apache: OK" | tee -a $BKP_LOG
+    echo -e "End time: $(date)"        | tee -a $BKP_LOG
+	
+    # Transfer backup to server
+	backup_transfer ${APACHE_BKPFILE}.${ARCHIVE_EXT}
+}
+

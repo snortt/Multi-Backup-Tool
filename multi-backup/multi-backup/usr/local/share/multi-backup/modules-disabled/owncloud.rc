@@ -1,0 +1,19 @@
+# 
+# Resources for mult-backup system
+# Gabriel Marques - gabriel.marques@rnp.br
+# Wed May 25 11:43:25 BRT 2016
+#
+
+# Function to create Owncloud backup 
+backup_owncloud() {
+    echo -e "--------------------------" | tee -a $BKP_LOG
+	echo -e "Executing Owncloud backup" | tee -a $BKP_LOG
+	echo -e "Start time: $(date)"        | tee -a $BKP_LOG
+	$ARCHIVE $ARCHIVE_OPT ${OC_BKPFILE}.${ARCHIVE_EXT} $OC_DIR $OC_FILES >> $BKP_LOG 2>&1 && echo -e "Owncloud: OK" | tee -a $BKP_LOG
+	echo -e "End time: $(date)"          | tee -a $BKP_LOG
+		
+	# Transfer backup to server
+	backup_transfer ${OC_BKPFILE}.${ARCHIVE_EXT}
+	
+}
+

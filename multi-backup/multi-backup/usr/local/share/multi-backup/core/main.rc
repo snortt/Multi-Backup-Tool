@@ -1,0 +1,219 @@
+# 
+# Resources for mult-backup system
+# Gabriel Marques - gabriel.marques@rnp.br
+# Wed May 25 11:43:25 BRT 2016
+#
+
+# ---------------- HELP! ------------------------
+help_msg() {
+	echo -e "-----------------------------"
+	echo -e "Usage: "
+	echo -e "  ${0##*/} [option] <module>"
+	echo -e "Available options:"   
+	echo -e "  --help               This help text."   
+	echo -e "  --clean [-v]         Create logs backup and clean log dir."   
+	echo -e "  --clean_local [-v]   Clean ALL LOCAL backup! (YES! It will delete all!)"   
+	echo -e " "
+	echo -e "Modules:"
+	echo -e "  apache               Apache backup."
+    echo -e "  exim                 Exim MTA backup."
+    echo -e "  ldap                 LDAP backup."
+	echo -e "  linux                Linux system backup."
+	echo -e "  mysql [-i]           MySQL backup. The -i switch causes interactive mode."
+    echo -e "  owncloud             Owncloud backup."
+    echo -e "  redmine              Redmine backup."
+    echo -e "  repos                Create backups for local repositories (Git, SVN, CVS)."
+    echo -e "  restore <file>       Restore given backup files."
+    echo -e "                       DON'T combine with other modules! (see manpage)."
+	echo -e "  sanity [-v]          Perform sanity checks (if deps are ok)."
+	echo -e "  transfer [-d] <file> Send files to BKP server. -d deletes file after transfer"
+    echo -e "                       DON'T combine with other modules! (see manpage)."
+    echo -e "                       Use -v for verbosity."
+	echo -e "  wordpress            Wordpress backup."
+    echo -e " "
+    echo -e "To enable/disable modules, see multi-backup(1)"
+
+	exit 101
+}
+
+# ---------------- SANITY CHECKS ----------------
+sanity_checks() {
+    total_errors="0"
+    echo -e "------------------------" | tee -a $BKP_LOG
+    echo -e "Performing sanity checks" | tee -a $BKP_LOG
+    echo -e "If a test fails, I'll abort so you can correct the problem(s) I found" | tee -a $BKP_LOG
+
+	if [[ ! -f $(which tar) ]]; then
+        echo -e "------------------------" | tee -a $BKP_LOG
+		echo -e "tar not found or not executable." | tee -a $BKP_LOG
+		echo -e "Please correct it and try again." | tee -a $BKP_LOG
+        echo -e "------------------------" | tee -a $BKP_LOG
+        (( total_errors=total_errors+1 ))
+    else
+        if [[ "$1" == "-v" ]]; then
+		    echo -e "tar: PASSED" | tee -a $BKP_LOG
+        fi
+    fi
+
+	if [[ ! -f $(which gzip) ]]; then
+        echo -e "------------------------" | tee -a $BKP_LOG
+		echo -e "gzip not found or not executable." | tee -a $BKP_LOG
+		echo -e "Please correct it and try again." | tee -a $BKP_LOG
+        echo -e "------------------------" | tee -a $BKP_LOG
+        (( total_errors=total_errors+1 ))
+    else
+        if [[ "$1" == "-v" ]]; then
+		    echo -e "gzip: PASSED" | tee -a $BKP_LOG
+        fi
+    fi
+
+	if [[ ! -f $(which bzip2) ]]; then
+        echo -e "------------------------" | tee -a $BKP_LOG
+		echo -e "bzip2 not found or not executable." | tee -a $BKP_LOG
+		echo -e "Please correct it and try again." | tee -a $BKP_LOG
+        echo -e "------------------------" | tee -a $BKP_LOG
+        (( total_errors=total_errors+1 ))
+    else
+        if [[ "$1" == "-v" ]]; then
+		    echo -e "bzip: PASSED" | tee -a $BKP_LOG
+        fi
+    fi
+	
+	if [[ ! -f $(which ncftp) ]]; then
+        echo -e "------------------------" | tee -a $BKP_LOG
+		echo -e "ncftp not found or not executable." | tee -a $BKP_LOG
+		echo -e "Please correct it and try again." | tee -a $BKP_LOG
+        echo -e "------------------------" | tee -a $BKP_LOG
+        (( total_errors=total_errors+1 ))
+    else
+        if [[ "$1" == "-v" ]]; then
+		    echo -e "ncftp: PASSED" | tee -a $BKP_LOG
+        fi
+    fi
+
+	if [[ -f $MYSQL_PWF ]]; then
+        if [[ "$1" == "-v" ]]; then
+		    echo -e "MySQL Auth file: PASSED" | tee -a $BKP_LOG
+        fi
+	else
+        echo -e "------------------------" | tee -a $BKP_LOG
+        echo -e "Error: file $MYSQL_PWF not found!" | tee -a $BKP_LOG
+        echo -e "Create the $MYSQL_PWF file with MySQL admin password and chmod it to 0400, or use -i switch" | tee -a $BKP_LOG
+		echo -e "--- OR ---"  | tee -a $BKP_LOG
+		echo -e "Add \"-i\" option to \"backup_mysql\" in multi-backup main file" | tee -a $BKP_LOG
+        echo -e "------------------------" | tee -a $BKP_LOG
+        (( total_errors=total_errors+1 ))
+    fi
+	
+	if [[ -f $BKP_SRV_AUTH ]]; then
+        if [[ "$1" == "-v" ]]; then
+		    echo -e "FTP Auth file: PASSED" | tee -a $BKP_LOG
+        fi
+	else
+        echo -e "------------------------" | tee -a $BKP_LOG
+		echo -e "Error! $BKP_SRV_AUTH not found!" | tee -a $BKP_LOG
+		echo -e "Create $BKP_SRV_AUTH with syntax host:user:password" | tee -a $BKP_LOG
+		echo -e "--- OR ---" | tee -a $BKP_LOG
+		echo -e "Add \"-i\" option to \"backup_transfer\" in multi-backup main file" | tee -a $BKP_LOG
+        echo -e "------------------------" | tee -a $BKP_LOG
+        (( total_errors=total_errors+1 ))
+	fi
+
+	if [[ -d $LOGDIR ]]; then
+        if [[ "$1" == "-v" ]]; then
+	    	echo -e "Logs dir: PASSED" | tee -a $BKP_LOG
+        fi
+	else
+        echo -e "------------------------" | tee -a $BKP_LOG
+		echo -e "Error! $LOGDIR not found!" | tee -a $BKP_LOG
+		echo -e "Create $LOGDIR to hold your log files." | tee -a $BKP_LOG
+        echo -e "------------------------" | tee -a $BKP_LOG
+        (( total_errors=total_errors+1 ))
+	fi
+
+	if [[ -d $BASEDIR ]]; then
+        if [[ "$1" == "-v" ]]; then
+		    echo -e "Backups dir: PASSED" | tee -a $BKP_LOG
+        fi
+	else
+    echo -e "------------------------" | tee -a $BKP_LOG
+		echo -e "Error! $BASEDIR not found!" | tee -a $BKP_LOG
+		echo -e "Create $BASEDIR to hold your backup files." | tee -a $BKP_LOG
+    echo -e "------------------------" | tee -a $BKP_LOG
+        (( total_errors=total_errors+1 ))
+	fi
+
+    echo -e "------------------------" | tee -a $BKP_LOG
+    echo -e "End of Sanity Checks" | tee -a $BKP_LOG
+    echo -e "------------------------" | tee -a $BKP_LOG
+    if [ "$total_errors" -gt "0" ]; then 
+        echo -e "$total_errors errors found!" | tee -a $BKP_LOG
+        echo -e "---------------------------" | tee -a $BKP_LOG
+		echo -e "Aborted!" | tee -a $BKP_LOG
+        exit 102
+    else
+        echo -e "No errors found! =)" | tee -a $BKP_LOG
+        echo -e "-------------------" | tee -a $BKP_LOG
+    fi
+
+}
+
+# Functino to restore backup files.
+# As this tool creates its archives with full path relative to the root of the file
+# system, this function extracts the archive redirecting the output to "/"
+# If -v option if provided, toggles verbosity on.
+restore_backup() {
+    
+    if [ "$#" -le "0" ] || [ "$#" -eq "1" -a "$1" == "-v" ]; then
+        echo -e "You need to provide a backup to restore" | tee -a $BKP_LOG
+        echo -e "Aborted!" | tee -a $BKP_LOG
+        exit 103
+    fi
+    
+    if [ "$1" == "-v" ]; then
+        opt="v"
+        shift 
+    fi
+	
+    for backup in "$@"
+    do
+	# If this is the MySQL backup, we need to extract and restore
+	if [[ "$(basename ${backup%-*-*})" == "$(basename ${MYSQL_BKPFILE%-*-*})" ]]; then
+		echo -e "MYSQL backup found!"
+        	MYSQL_PASS="-p$(cat $MYSQL_PWF)"
+		${COMPRESS} -dc $backup | mysql -u root ${MYSQL_PASS} 
+		unset MYSQL_PASS 
+        else
+		echo "Restoring backup file $backup" | tee -a $BKP_LOG
+        	tar xf$opt $backup -C / | tee -a $BKP_LOG
+	fi
+    done
+
+    exit
+}
+
+# Function that archives all $LOGDIR logs in ${VARDIR}/logs_archive_$TIMESTAMP
+clean_logs() {
+
+    if [ "$1" == "-v" ]; then opt="v"; fi
+
+    echo -e "Archiving logs from $LOGDIR to $VARDIR/logs_archive_$TIMESTAMP.tar.bz2" | tee -a $BKP_LOG
+    tar cjf${opt} ${VARDIR}/logs_archive_${TIMESTAMP}.tar.bz2 ${LOGDIR} && echo OK | tee -a $BKP_LOG
+    
+    echo -e "Cleaning $LOGDIR..." | tee -a $BKP_LOG
+    rm -f${opt} ${LOGDIR}/*.log && echo "OK" | tee -a $BKP_LOG
+
+    exit 
+}
+
+# Function that removes all local backup files 
+clean_local() {
+
+    if [ "$1" == "-v" ]; then opt="v"; fi
+
+    echo -e "Removing ALL LOCAL bakcup files!" | tee -a $BKP_LOG
+    rm -f$opt ${BASEDIR}/*.??* && echo OK | tee -a $BKP_LOG
+
+    exit 
+}
+

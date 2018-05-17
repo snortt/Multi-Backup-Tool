@@ -1,0 +1,68 @@
+# Init file for multi-backup tool
+# Gabriel Marques - gabriel.marques@rnp.br
+# Wed May 25 11:43:25 BRT 2016
+
+# ============================================================
+# Configuration files
+CONFDIR="/usr/local/etc/multi-backup"
+CONFCORE="${CONFDIR}/core"
+CONFMODS="${CONFDIR}/modules"
+
+# These two are mandatory! They are the core of the tool!
+MAINCFG="${CONFCORE}/main.conf"
+TRANSFCFG="${CONFCORE}/transfer.conf"
+
+if [ -f "${MAINCFG}" ]; then
+    . ${MAINCFG} 
+else
+    echo -e "Error loading main configuration file!" | tee -a "$BKP_LOG"
+    echo -e "Check ${MAINCFG}" | tee -a "$BKP_LOG"
+fi
+
+if [ -f "${TRANSFCFG}" ]; then
+    . ${TRANSFCFG} 
+else
+    echo -e "Error loading transfer configuration file!" | tee -a "$BKP_LOG"
+    echo -e "Check ${TRANSFCFG}" | tee -a "$BKP_LOG"
+fi
+
+echo -e "Loading additional config..." | tee -a "$BKP_LOG"
+for config in $CONFMODS/*.conf
+do
+    . ${config} && echo -en "|$(basename ${config%%.*})" | tee -a "$BKP_LOG"
+done
+echo -e "|\n" | tee -a "$BKP_LOG"
+
+# ============================================================
+# Resources file  
+RCDIR="/usr/local/share/multi-backup"
+RCCORE="${RCDIR}/core"
+RCMODS="${RCDIR}/modules"
+
+# These two are mandatory! They are the core of the tool!
+MAINRC="${RCCORE}/main.rc"
+TRANSFERRC="${RCCORE}/transfer.rc"
+
+if [ -f "${MAINRC}" ]; then
+	. ${MAINRC} 
+else
+	echo -e "Unable to load main resources file!" | tee -a "$BKP_LOG"
+    echo -e "Check ${MAINRC}" | tee -a "$BKP_LOG"
+    exit 100
+fi
+
+if [ -f "${TRANSFERRC}" ]; then
+	. ${TRANSFERRC} 
+else
+	echo -e "Unable to load main transfer resources file!" | tee -a "$BKP_LOG"
+    echo -e "Check ${TRANSFERRC}" | tee -a "$BKP_LOG"
+    exit 100
+fi
+
+echo -e "Loading additional resources..." | tee -a "$BKP_LOG"
+for rc in $RCMODS/*.rc
+do
+    . ${rc} && echo -en "|$(basename ${rc%%.*})" | tee -a "$BKP_LOG"
+done
+echo -e "|\n" | tee -a "$BKP_LOG"
+

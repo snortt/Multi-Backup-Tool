@@ -1,0 +1,11 @@
+Package: multi-backup
+Section: system 
+Priority: optional
+Version: 2.0 
+Maintainer: Gabriel Marques <snortt@gmail.com>
+Depends: tar, gzip, bzip2, ncftp
+Architecture: all
+Description: Create backups for various system areas. 
+ This tool can backup MySQL, Apache, Wordpress and Linux files.
+ It is extendable and you can implement your own modules. 
+ Check the manpage for usage and hacking information.  multi-backup(1).

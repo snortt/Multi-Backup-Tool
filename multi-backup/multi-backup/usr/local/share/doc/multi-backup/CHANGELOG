@@ -1,0 +1,48 @@
+Ok, I didn't update this file for a long time. My bad! Sorry!
+Take a look at the GIT log to see what has happened so far.
+
+-- Gabriel.
+
+
+1.2
+ * Gabriel Marques
+  - Added module for Redmine backup
+
+1.1
+ * Gabriel Marques
+  - FTP transfer control flag
+
+1.0
+ * Gabriel Marques
+  - Added module for LDAP backup
+
+0.{6,7,8,9} 
+ * Gabriel Marques
+  - Minor adjustments
+  - Ok! I lost some tracking here. 
+  - My bad! Sorry! 
+
+0.5
+ * Gabriel Marques
+  - Config split into per module file
+  - Added ftp transfer verification before deleting the backup file
+  - Added module for restoring backups
+  - Minor adjustments
+  - Small manpage polishings
+
+0.4
+ * Gabriel Marques
+  - Replaced ftp transfers with ncftp
+  - Minor adjustments
+
+0.3
+ * Gabriel Marques
+  - Added ftp auth control file support
+ 
+0.2
+ * Gabriel Marques
+  - Added ftp transfer support
+
+0.1
+ * Gabriel Marques
+  - Aaaaaaaaannnnnndddd ACTION! We're rolling! ;)

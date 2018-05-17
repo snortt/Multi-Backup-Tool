@@ -1,0 +1,9 @@
+/usr/local/etc/multi-backup/core/main.conf
+/usr/local/etc/multi-backup/core/transfer.conf
+/usr/local/etc/multi-backup/modules-disabled/apache.conf
+/usr/local/etc/multi-backup/modules-disabled/exim.conf
+/usr/local/etc/multi-backup/modules-disabled/ldap.conf
+/usr/local/etc/multi-backup/modules-disabled/linux.conf
+/usr/local/etc/multi-backup/modules-disabled/mysql.conf
+/usr/local/etc/multi-backup/modules-disabled/redmine.conf
+/usr/local/etc/multi-backup/modules-disabled/wordpress.conf

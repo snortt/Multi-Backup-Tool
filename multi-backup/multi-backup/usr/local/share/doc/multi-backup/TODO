@@ -1,0 +1,2 @@
+* Implement scp|rsync as additional methods for file transfer
+* Implement backups for other services (Squid, Samba, Iptables, etc.)
